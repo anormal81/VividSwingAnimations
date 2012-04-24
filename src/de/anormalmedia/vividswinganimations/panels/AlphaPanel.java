@@ -28,9 +28,6 @@ public class AlphaPanel extends JPanel {
         g2d.setRenderingHint( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY );
         g2d.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
 
-        // FIXME ist das wirklich nötig???
-        g2d.clearRect( 0, 0, getWidth(), getHeight() );
-
         Composite origComposite = g2d.getComposite();
         g2d.setComposite( AlphaComposite.getInstance( AlphaComposite.SRC_OVER, alpha ) );
         super.paint( g2d );
