@@ -11,6 +11,11 @@ import javax.swing.JPanel;
 public class AlphaPanel extends JPanel {
 
     private float alpha = 1f;
+    
+    public AlphaPanel() {
+        super();
+        setOpaque( false );
+    }
 
     public void setAlpha( float alpha ) {
         this.alpha = alpha;
@@ -32,6 +37,7 @@ public class AlphaPanel extends JPanel {
         g2d.setComposite( AlphaComposite.getInstance( AlphaComposite.SRC_OVER, alpha ) );
         super.paint( g2d );
         g2d.setComposite( origComposite );
+        g2d.dispose();
     }
 
 }
