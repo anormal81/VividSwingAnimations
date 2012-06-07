@@ -55,7 +55,7 @@ public class BoundsAnimation extends AbstractAnimation {
         if( targetBounds.width == -1 ) {
             nextWidth = currentBounds.width;
         }
-        if( targetBounds.width == -1 ) {
+        if( targetBounds.height == -1 ) {
             nextHeight = currentBounds.height;
         }
         target.setBounds( nextX, nextY, nextWidth, nextHeight );
