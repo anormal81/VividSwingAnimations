@@ -1,11 +1,18 @@
 package de.anormalmedia.vividswinganimations.fade;
 
+import java.awt.Container;
 import java.awt.Window;
+
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JWindow;
 
 import com.sun.awt.AWTUtilities;
 
 import de.anormalmedia.vividswinganimations.Animation;
 import de.anormalmedia.vividswinganimations.color.ComponentFadeAnimation;
+import de.anormalmedia.vividswinganimations.panels.AlphaPanel;
+import de.anormalmedia.vividswinganimations.panels.AlphaPanelAnimation;
 
 public class WindowFadeFactory {
 
@@ -19,16 +26,24 @@ public class WindowFadeFactory {
         } catch( UnsupportedOperationException uoe ) {
         }
 
-        // Wenn keine Window-Opacity, dann nur bei Java 7 einen Animator liefern
-        boolean java7 = false;
-        try {
-            Class.forName( "javax.swing.plaf.nimbus.NimbusLookAndFeel" );
-            java7 = true;
-        } catch( ClassNotFoundException cnfe ) {
+        Container contentPane = null;
+        if( target instanceof JFrame ) {
+            JFrame frame = (JFrame)target;
+            contentPane = frame.getContentPane();
         }
-        if( java7 ) {
-            return new ComponentFadeAnimation( target, targetAlpha );
+        if( target instanceof JDialog ) {
+            JDialog dialog = (JDialog)target;
+            contentPane = dialog.getContentPane();
         }
-        return null;
+        if( target instanceof JWindow ) {
+            JWindow window = (JWindow)target;
+            contentPane = window.getContentPane();
+        }
+        if( contentPane instanceof AlphaPanel ) {
+            AlphaPanel aPanel = (AlphaPanel)contentPane;
+            return new AlphaPanelAnimation( aPanel, targetAlpha );
+        }
+
+        return new ComponentFadeAnimation( target, targetAlpha );
     }
 }
