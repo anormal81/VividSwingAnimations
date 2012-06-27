@@ -84,8 +84,8 @@ public class DefaultAnimationRunner implements AnimationRunner {
                     // runner was stopped
                     return;
                 } catch( InvocationTargetException e ) {
-                    //FIXME: Should not occur, but must be handled
-                    e.printStackTrace();
+                    // Finish the animation if there was an error during step execution
+                    anim.finish();
                 }
                 if( onStepExecuted( anim ) ) {
                     break;

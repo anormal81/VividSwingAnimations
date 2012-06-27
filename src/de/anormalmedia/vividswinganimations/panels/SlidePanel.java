@@ -21,7 +21,7 @@ public class SlidePanel extends JPanel {
         setOpaque( false );
         this.direction = direction;
     }
-    
+
     public void setDirection( DIRECTION direction ) {
         this.direction = direction;
     }
@@ -34,10 +34,12 @@ public class SlidePanel extends JPanel {
     public float getSlideValue() {
         return slideValue;
     }
-    
+
     @Override
     public void setBounds( int x, int y, int width, int height ) {
-        super.setBounds( x, y, width, height );
+        synchronized( getTreeLock() ) {
+            super.setBounds( x, y, width, height );
+        }
         invalidate();
         validateTree();
     }

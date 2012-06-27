@@ -58,7 +58,9 @@ public class BoundsAnimation extends AbstractAnimation {
         if( targetBounds.height == -1 ) {
             nextHeight = currentBounds.height;
         }
-        target.setBounds( nextX, nextY, nextWidth, nextHeight );
+        synchronized( target.getTreeLock() ) {
+            target.setBounds( nextX, nextY, nextWidth, nextHeight );
+        }
     }
 
     public Rectangle getTargetBounds() {
