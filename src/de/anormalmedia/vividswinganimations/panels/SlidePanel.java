@@ -2,8 +2,8 @@ package de.anormalmedia.vividswinganimations.panels;
 
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
-import java.awt.Shape;
 
 import javax.swing.JPanel;
 
@@ -46,7 +46,7 @@ public class SlidePanel extends JPanel {
 
     @Override
     public void paint( Graphics g ) {
-        Graphics2D g2d = (Graphics2D)g;
+        Graphics2D g2d = (Graphics2D)g.create();
         g2d.setRenderingHint( RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR );
         g2d.setRenderingHint( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY );
         g2d.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
@@ -55,45 +55,34 @@ public class SlidePanel extends JPanel {
         int h = getHeight();
         int delta = 0;
 
-        Shape oldClip = g2d.getClip();
+        Rectangle clip = g2d.getClipBounds();
+        int transX = 0;
+        int transY = 0;
         switch( direction ) {
             case fromLeft:
                 delta = (int)Math.floor( w * slideValue );
-                g2d.setClip( 0, 0, delta, h );
-                g2d.translate( -(w - delta), 0 );
+                clip = new Rectangle( 0, 0, delta, h );
+                transX = -(w - delta);
                 break;
             case fromRight:
                 delta = (int)Math.floor( w * slideValue );
-                g2d.setClip( w - delta, 0, delta, h );
-                g2d.translate( (w - delta), 0 );
+                clip = new Rectangle( w - delta, 0, delta, h );
+                transX = (w - delta);
                 break;
             case fromTop:
                 delta = (int)Math.floor( h * slideValue );
-                g2d.setClip( 0, 0, w, delta );
-                g2d.translate( 0, -(h - delta) );
+                clip = new Rectangle( 0, 0, w, delta );
+                transY = -(h - delta);
                 break;
             case fromBottom:
                 delta = (int)Math.floor( h * slideValue );
-                g2d.setClip( 0, h - delta, w, delta );
-                g2d.translate( 0, (h - delta) );
+                clip = new Rectangle( 0, h - delta, w, delta );
+                transY = (h - delta);
                 break;
         }
+        g2d.setClip( clip.intersection( g2d.getClipBounds() ) );
+        g2d.translate( transX, transY );
         super.paint( g2d );
-        switch( direction ) {
-            case fromLeft:
-                g2d.translate( (w - delta), 0 );
-                break;
-            case fromRight:
-                g2d.translate( -(w - delta), 0 );
-                break;
-            case fromTop:
-                g2d.translate( 0, (h - delta) );
-                break;
-            case fromBottom:
-                g2d.translate( 0, -(h - delta) );
-                break;
-        }
-        g2d.setClip( oldClip );
         g2d.dispose();
     }
 }
