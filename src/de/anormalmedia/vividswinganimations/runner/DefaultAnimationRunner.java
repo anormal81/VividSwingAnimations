@@ -1,7 +1,5 @@
 package de.anormalmedia.vividswinganimations.runner;
 
-import java.awt.Toolkit;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,13 +22,8 @@ import de.anormalmedia.vividswinganimations.Animation;
  */
 public class DefaultAnimationRunner implements AnimationRunner {
 
-    private static final int     FRAMES_PER_SECOND = 120;
-
     private ArrayList<Animation> animations        = new ArrayList<Animation>();
-    protected Thread             thread            = null;
-    protected boolean            animationsRunning = false;
-    protected int                timeToWait        = 1000 / FRAMES_PER_SECOND;
-    protected boolean            canceled;
+    protected boolean            animationsRunning = true;
     protected long               starttime         = 0;
 
     /**
@@ -38,70 +31,37 @@ public class DefaultAnimationRunner implements AnimationRunner {
      */
     @Override
     public void run() {
-        animationsRunning = true;
-
-        starttime = System.currentTimeMillis();
-        while( animationsRunning && !canceled ) {
-
-            long animateTime = System.currentTimeMillis();
-            animationsRunning = false;
-            // Store animation locally to allow parallel changes
-            ArrayList<Animation> localanimations = new ArrayList<Animation>();
-            synchronized( animations ) {
-                localanimations.addAll( animations );
-            }
-            for( final Animation anim : localanimations ) {
-                if( anim.isFinished() ) {
-                    // Only execute not finished animations
-                    continue;
-                }
-                try {
-                    // Wait for each animation to finish, so we can calculate the required sleep time to match the frame rate.
-                    SwingUtilities.invokeAndWait( new Runnable() {
-
-                        @Override
-                        public void run() {
-                            // calculate the current time progress for all animations
-                            long frameTime = System.currentTimeMillis() - starttime;
-                            // only start animation if start offset is reached
-                            if( frameTime >= anim.getStartOffset() ) {
-                                // Prepare animation if not done before.
-                                if( !anim.isPrepared() ) {
-                                    anim.prepare();
-                                }
-                                // execute the animation with the animation specific time progress.
-                                boolean moreToAnimate = anim.executeStep( frameTime - anim.getStartOffset() );
-                                if( !moreToAnimate ) {
-                                    anim.finish();
-                                }
-                                animationsRunning |= moreToAnimate;
-                            } else {
-                                animationsRunning |= true;
-                            }
-                        }
-                    } );
-                } catch( InterruptedException e ) {
-                    // runner was stopped
-                    return;
-                } catch( InvocationTargetException e ) {
-                    // Finish the animation if there was an error during step execution
-                    anim.finish();
-                }
-                if( onStepExecuted( anim ) ) {
-                    break;
-                }
-            }
-            // Sync to the monitor screen.
-            Toolkit.getDefaultToolkit().sync();
-            try {
-                // Calculate the remaining sleep time. Minimum is 1ms.
-                long delta = timeToWait - (System.currentTimeMillis() - animateTime);
-                Thread.sleep( delta < 1 ? 1 : delta );
-            } catch( InterruptedException e ) {
-                // runner was stopped
-                return;
-            }
+        if( starttime == 0 ) {
+            starttime = System.currentTimeMillis();
         }
+        SwingUtilities.invokeLater( new Runnable() {
+            @Override
+            public void run() {
+                for( final Animation anim : animations ) {
+                    if( anim.isFinished() ) {
+                        // Only execute not finished animations
+                        continue;
+                    }
+                    // calculate the current time progress for all animations
+                    long frameTime = System.currentTimeMillis() - starttime;
+                    // only start animation if start offset is reached
+                    if( frameTime >= anim.getStartOffset() ) {
+                        // Prepare animation if not done before.
+                        if( !anim.isPrepared() ) {
+                            anim.prepare();
+                        }
+                        // execute the animation with the animation specific time progress.
+                        boolean moreToAnimate = anim.executeStep( frameTime - anim.getStartOffset() );
+                        if( !moreToAnimate ) {
+                            anim.finish();
+                        }
+                    }
+                    if( onStepExecuted( anim ) ) {
+                        break;
+                    }
+                }
+            }
+        } );
     }
 
     /**
@@ -118,7 +78,17 @@ public class DefaultAnimationRunner implements AnimationRunner {
      */
     @Override
     public boolean isRunning() {
-        return thread != null && thread.isAlive();
+        if( !animationsRunning ) {
+            return false;
+        } else {
+            for( int i = 0; i < animations.size(); i++ ) {
+                if( !animations.get( i ).isFinished() ) {
+                    return true;
+                }
+            }
+        }
+        animationsRunning = false;
+        return animationsRunning;
     }
 
     /**
@@ -126,10 +96,9 @@ public class DefaultAnimationRunner implements AnimationRunner {
      */
     @Override
     public void start() {
-        stop();
-        thread = new Thread( this, "DefaultAnimationExecutor" );
-        thread.setDaemon( true );
-        thread.start();
+        if( animationsRunning ) {
+            SystemAnimationThread.getDefault().addAnimation( this );
+        }
     }
 
     /**
@@ -137,19 +106,7 @@ public class DefaultAnimationRunner implements AnimationRunner {
      */
     @Override
     public void cancel() {
-        canceled = true;
-        thread = null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void stop() {
-        if( thread != null && thread.isAlive() ) {
-            thread.interrupt();
-        }
-        thread = null;
+        animationsRunning = false;
     }
 
     /**
@@ -157,9 +114,7 @@ public class DefaultAnimationRunner implements AnimationRunner {
      */
     @Override
     public void addAnimation( Animation animation ) {
-        synchronized( animations ) {
-            animations.add( animation );
-        }
+        animations.add( animation );
     }
 
     /**
@@ -167,9 +122,7 @@ public class DefaultAnimationRunner implements AnimationRunner {
      */
     @Override
     public void removeAnimation( Animation animation ) {
-        synchronized( animations ) {
-            animations.remove( animation );
-        }
+        animations.remove( animation );
     }
 
     /**
@@ -177,8 +130,14 @@ public class DefaultAnimationRunner implements AnimationRunner {
      */
     @Override
     public List<Animation> getAnimations() {
-        synchronized( animations ) {
-            return animations;
+        return animations;
+    }
+
+    @Override
+    public void stop() {
+        animationsRunning = false;
+        for( Animation anim : animations ) {
+            anim.finish();
         }
     }
 }
