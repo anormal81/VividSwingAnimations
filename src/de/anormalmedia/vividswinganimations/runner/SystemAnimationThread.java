@@ -57,17 +57,21 @@ public class SystemAnimationThread implements Runnable{
             }
             // Sync to the monitor screen.
             try {
-                SwingUtilities.invokeAndWait( new Runnable() {
+                final Object monitor = new Object();
+                SwingUtilities.invokeLater( new Runnable() {
                     @Override
                     public void run() {
-                        // no implementation, just used to wait for all recent animations to finish
+                        synchronized( monitor ) {
+                            monitor.notify();
+                        }
                     }
                 } );
+                synchronized( monitor ) {
+                    monitor.wait( 1000 );
+                }
             } catch( InterruptedException e1 ) {
                 thread = null;
                 return;
-            } catch( InvocationTargetException e1 ) {
-                e1.printStackTrace();
             }
             // Note: Some toolkit implementations only have an empty implementation of this method:
             Toolkit.getDefaultToolkit().sync();
