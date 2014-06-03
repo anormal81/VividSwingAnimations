@@ -1,13 +1,13 @@
 package de.anormalmedia.vividswinganimations.fade;
 
 import java.awt.Container;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsDevice.WindowTranslucency;
 import java.awt.Window;
 
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JWindow;
-
-import com.sun.awt.AWTUtilities;
 
 import de.anormalmedia.vividswinganimations.Animation;
 import de.anormalmedia.vividswinganimations.color.ComponentFadeAnimation;
@@ -18,14 +18,14 @@ public class WindowFadeFactory {
 
     public static Animation createWindowFadeAnimation( Window target, float targetAlpha ) {
         try {
-            if( AWTUtilities.isTranslucencySupported( AWTUtilities.Translucency.TRANSLUCENT ) && AWTUtilities.isTranslucencyCapable( target.getGraphicsConfiguration() ) ) {
-                AWTUtilities.setWindowOpaque( target, true );
-                AWTUtilities.setWindowOpacity( target, AWTUtilities.getWindowOpacity( target ) );
+            GraphicsDevice gd = target.getGraphicsConfiguration().getDevice();
+            if( gd.isWindowTranslucencySupported( WindowTranslucency.TRANSLUCENT ) ) {
+                target.setOpacity( target.getOpacity() );
                 return new WindowFadeAnimation( target, targetAlpha );
             }
-        } catch( UnsupportedOperationException uoe ) {
+        } catch( Throwable t ) {
+            t.printStackTrace();
         }
-
         Container contentPane = null;
         if( target instanceof JFrame ) {
             JFrame frame = (JFrame)target;

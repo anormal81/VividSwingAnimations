@@ -2,8 +2,6 @@ package de.anormalmedia.vividswinganimations.fade;
 
 import java.awt.Window;
 
-import com.sun.awt.AWTUtilities;
-
 import de.anormalmedia.vividswinganimations.AbstractAnimation;
 
 public class WindowFadeAnimation extends AbstractAnimation {
@@ -20,8 +18,7 @@ public class WindowFadeAnimation extends AbstractAnimation {
 
     @Override
     public void prepare() {
-        AWTUtilities.setWindowOpaque( target, true );
-        initialAlpha = AWTUtilities.getWindowOpacity( target );
+        initialAlpha = target.getOpacity();
         super.prepare();
     }
 
@@ -29,7 +26,6 @@ public class WindowFadeAnimation extends AbstractAnimation {
     public void animate( long timeProgress ) {
         float deltaAlpha = targetAlpha - initialAlpha;
         float nextAlpha = Math.max( 0f, Math.min( 1f, initialAlpha + ((float)deltaAlpha / (float)getDuration() * (float)timeProgress) ) );
-
-        AWTUtilities.setWindowOpacity( target, nextAlpha );
+        target.setOpacity( nextAlpha );
     }
 }

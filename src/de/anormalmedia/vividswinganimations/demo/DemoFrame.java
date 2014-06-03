@@ -27,6 +27,9 @@ public class DemoFrame extends JFrame {
 
     public DemoFrame() {
         super( "Swing Animations" );
+        // Window translucency in Java 7 is only supported for undecortated windows.
+        setUndecorated( true );
+
         setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
 
         Container contentPane = getContentPane();
